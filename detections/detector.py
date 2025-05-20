@@ -54,7 +54,9 @@ def detectar_carriles(frame):
     if len(vertical_lines) < 2:
         return []  
 
-    clustering = DBSCAN(eps=eps_dbscan, min_samples=min_samples_dbscan).fit(vertical_lines)
+    # Convertir a numpy array para que DBSCAN lo acepte correctamente
+    vertical_lines_array = np.array(vertical_lines)
+    clustering = DBSCAN(eps=eps_dbscan, min_samples=min_samples_dbscan).fit(vertical_lines_array)
     labels = clustering.labels_
 
     carril_lines = []
