@@ -1,11 +1,8 @@
-// projectback/src/main/java/com/example/demo/controller/DetectionController.java
 package com.example.demo.controller;
 
-import com.example.demo.entity.Detection;
-import com.example.demo.service.*;
-import com.example.demo.service.datastructures.*;
+import com.example.demo.dto.*;
+import com.example.demo.service.AnalysisService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,95 +10,84 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/detections")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class DetectionController {
-    private final DetectionService detectionService;
-    private final TrafficAnalysisService trafficAnalysisService;
-    private final DataStructureService dataStructureService;
+    
+    private final AnalysisService analysisService;
 
-    @GetMapping
-    public ResponseEntity<List<Detection>> getAllDetections() {
-        return ResponseEntity.ok(detectionService.getAllDetections());
-    }
-
-    // Análisis de tráfico general
     @GetMapping("/volume/total")
-    public ResponseEntity<Map<String, Map<String, Integer>>> getTotalVehicleVolume() {
-        return ResponseEntity.ok(trafficAnalysisService.getTotalVehicleVolumeByType());
+    public TotalVolumeDTO getTotalVolume() {
+        return analysisService.getTotalVolume();
     }
 
     @GetMapping("/volume/by-lane")
-    public ResponseEntity<Map<String, Map<String, Integer>>> getVehicleVolumeByLane() {
-        return ResponseEntity.ok(trafficAnalysisService.getVehicleVolumeByLane());
+    public Map<String, Map<String, Integer>> getVolumeByLane() {
+        return analysisService.getVolumeByLane();
     }
 
     @GetMapping("/patterns/hourly")
-    public ResponseEntity<Map<String, Integer>> getHourlyPatterns() {
-        return ResponseEntity.ok(trafficAnalysisService.getTrafficPatternsByHour());
+    public Map<String, Integer> getHourlyPatterns() {
+        return analysisService.getHourlyPatterns();
     }
 
-    // Análisis de comportamiento por carril
     @GetMapping("/lanes/speed")
-    public ResponseEntity<Map<String, Double>> getAvgSpeedByLane() {
-        return ResponseEntity.ok(trafficAnalysisService.getAverageSpeedByLane());
+    public Map<String, Double> getAvgSpeedByLane() {
+        return analysisService.getAvgSpeedByLane();
     }
 
     @GetMapping("/lanes/bottlenecks")
-    public ResponseEntity<List<Map<String, Object>>> getBottlenecks() {
-        return ResponseEntity.ok(trafficAnalysisService.identifyBottlenecks());
+    public List<BottleneckDTO> getBottlenecks() {
+        return analysisService.getBottlenecks();
     }
 
-    // Análisis temporal
     @GetMapping("/temporal/evolution")
-    public ResponseEntity<Map<String, List<Integer>>> getTrafficEvolution() {
-        return ResponseEntity.ok(trafficAnalysisService.getTrafficEvolutionOverTime());
+    public TrafficEvolutionDTO getTrafficEvolution() {
+        return analysisService.getTrafficEvolution();
     }
 
     @GetMapping("/temporal/speed")
-    public ResponseEntity<Map<String, List<Double>>> getSpeedEvolution() {
-        return ResponseEntity.ok(trafficAnalysisService.getSpeedEvolutionOverTime());
+    public SpeedEvolutionDTO getSpeedEvolution() {
+        return analysisService.getSpeedEvolution();
     }
 
-    // Análisis por tipo de vehículo
     @GetMapping("/vehicle-types/dominance")
-    public ResponseEntity<Map<String, Double>> getVehicleTypeDominance() {
-        return ResponseEntity.ok(trafficAnalysisService.getVehicleTypeDominance());
+    public Map<String, Double> getVehicleTypeDominance() {
+        return analysisService.getVehicleTypeDominance();
     }
 
-    // Estructuras de datos
     @GetMapping("/structures/array")
-    public ResponseEntity<int[]> getArrayExample() {
-        return ResponseEntity.ok(dataStructureService.getDetectionsAsArray());
+    public List<Integer> getArrayData() {
+        return analysisService.getArrayData();
     }
 
     @GetMapping("/structures/linked-list")
-    public ResponseEntity<List<Detection>> getLinkedListExample() {
-        return ResponseEntity.ok(dataStructureService.getDetectionsAsLinkedList());
+    public List<ListItemDTO> getLinkedListData() {
+        return analysisService.getLinkedListData();
     }
 
     @GetMapping("/structures/double-linked-list")
-    public ResponseEntity<List<Detection>> getDoubleLinkedListExample() {
-        return ResponseEntity.ok(dataStructureService.getDetectionsAsDoubleLinkedList());
+    public List<ListItemDTO> getDoubleLinkedListData() {
+        return analysisService.getDoubleLinkedListData();
     }
 
     @GetMapping("/structures/circular-double-linked-list")
-    public ResponseEntity<List<Detection>> getCircularDoubleLinkedListExample() {
-        return ResponseEntity.ok(dataStructureService.getDetectionsAsCircularDoubleLinkedList());
+    public List<ListItemDTO> getCircularDoubleLinkedListData() {
+        return analysisService.getCircularDoubleLinkedListData();
     }
 
     @GetMapping("/structures/stack")
-    public ResponseEntity<List<Detection>> getStackExample() {
-        return ResponseEntity.ok(dataStructureService.getDetectionsAsStack());
+    public List<ListItemDTO> getStackData() {
+        return analysisService.getStackData();
     }
 
     @GetMapping("/structures/queue")
-    public ResponseEntity<List<Detection>> getQueueExample() {
-        return ResponseEntity.ok(dataStructureService.getDetectionsAsQueue());
+    public List<ListItemDTO> getQueueData() {
+        return analysisService.getQueueData();
     }
 
     @GetMapping("/structures/tree")
-    public ResponseEntity<Map<String, Object>> getTreeExample() {
-        return ResponseEntity.ok(dataStructureService.getDetectionsAsTree());
+    public TreeNodeDTO getTreeData() {
+        return analysisService.getTreeData();
     }
 }
