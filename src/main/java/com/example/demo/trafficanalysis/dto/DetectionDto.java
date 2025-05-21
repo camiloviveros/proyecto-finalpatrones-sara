@@ -1,10 +1,17 @@
-package com.example.demo.service.DTO;
+package com.trafficanalysis.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.Map;
 
 @Data
-public class DetectionJson {
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class DetectionDto {
     private Long timestamp_ms;
     private String date;
     private Map<String, Integer> objects_total;
