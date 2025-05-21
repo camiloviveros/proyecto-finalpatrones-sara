@@ -1,4 +1,4 @@
-package com.example.demo.config;
+package com.trafficanalysis.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,11 +11,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
     
     @Bean
-    public CorsFilter customCorsFilter() {
+    public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         
-        // Permitir cualquier origen durante desarrollo
+        // Permitir todos los orígenes durante el desarrollo
         config.addAllowedOrigin("*");
         config.addAllowedHeader("*");
         config.addAllowedMethod("GET");

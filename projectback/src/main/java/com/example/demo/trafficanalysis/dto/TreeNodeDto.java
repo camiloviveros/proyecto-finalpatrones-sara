@@ -1,17 +1,17 @@
-package com.example.demo.dto;
-
-import java.util.List;
+package com.trafficanalysis.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class TreeNodeDTO {
+@NoArgsConstructor
+public class TreeNodeDto {
     private String value;
-    private List<TreeNodeDTO> children;
+    private List<TreeNodeDto> children;
 }

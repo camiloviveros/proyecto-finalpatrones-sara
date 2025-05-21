@@ -1,4 +1,4 @@
-package com.example.demo.dto;
+package com.trafficanalysis.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,9 +7,9 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class BottleneckDTO {
+@NoArgsConstructor
+public class BottleneckDto {
     private String lane;
     private Double avgSpeed;
     private Integer totalVehicles;
