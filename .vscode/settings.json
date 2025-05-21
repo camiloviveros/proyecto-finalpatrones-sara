@@ -5,5 +5,6 @@
         "C:\\Users\\camilo\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages"
     ],
     "python.analysis.diagnosticMode": "workspace",
-    "python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "basic",
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

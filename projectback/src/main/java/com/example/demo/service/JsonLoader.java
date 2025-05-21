@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.entity.Detection;
 import com.example.demo.service.DTO.DetectionsWrapper;
@@ -22,6 +23,7 @@ public class JsonLoader {
     private final DetectionService detectionService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Transactional
     public void loadJsonAndSaveToDb(String filePath) throws IOException {
         log.info("Leyendo el archivo JSON desde: {}", filePath);
 
