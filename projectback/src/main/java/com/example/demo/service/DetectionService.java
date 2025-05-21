@@ -5,8 +5,9 @@ import com.example.demo.repository.DetectionRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,14 +15,19 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j  // Añadimos anotación para logging
 public class DetectionService {
 
+    private static final Logger log = LoggerFactory.getLogger(DetectionService.class);
+    
     private final DetectionRepository detectionRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Transactional  // Añadimos esta anotación para manejar correctamente las transacciones
+    @Autowired
+    public DetectionService(DetectionRepository detectionRepository) {
+        this.detectionRepository = detectionRepository;
+    }
+
+    @Transactional
     public void saveDetections(List<Detection> detections) {
         detectionRepository.saveAll(detections);
     }
@@ -34,7 +40,6 @@ public class DetectionService {
         try {
             return objectMapper.readValue(json, new TypeReference<Map<String, Integer>>() {});
         } catch (JsonProcessingException e) {
-            // Reemplazamos printStackTrace() con log.error()
             log.error("Error al analizar objectsTotal JSON: {}", e.getMessage(), e);
             return Map.of();
         }
@@ -44,7 +49,6 @@ public class DetectionService {
         try {
             return objectMapper.readValue(json, new TypeReference<Map<String, Map<String, Integer>>>() {});
         } catch (JsonProcessingException e) {
-            // Reemplazamos printStackTrace() con log.error()
             log.error("Error al analizar objectsByLane JSON: {}", e.getMessage(), e);
             return Map.of();
         }
@@ -54,7 +58,6 @@ public class DetectionService {
         try {
             return objectMapper.readValue(json, new TypeReference<Map<String, Double>>() {});
         } catch (JsonProcessingException e) {
-            // Reemplazamos printStackTrace() con log.error()
             log.error("Error al analizar avgSpeedByLane JSON: {}", e.getMessage(), e);
             return Map.of();
         }

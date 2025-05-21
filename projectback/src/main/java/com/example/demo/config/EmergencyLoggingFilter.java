@@ -24,20 +24,25 @@ public class EmergencyLoggingFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        long startTime = System.currentTimeMillis();
-        
-        log.info("==> INICIO solicitud [{}] a la URL: {}", request.getMethod(), request.getRequestURI());
-        log.info("==> Time: {}", new Date());
-        
-        try {
+        // Solo log para solicitudes no OPTIONS
+        if (!"OPTIONS".equals(request.getMethod())) {
+            long startTime = System.currentTimeMillis();
+            
+            log.info("==> INICIO solicitud [{}] a la URL: {}", request.getMethod(), request.getRequestURI());
+            
+            try {
+                filterChain.doFilter(request, response);
+            } catch (Exception e) {
+                log.error("==> ERROR en solicitud [{}]: {}", request.getRequestURI(), e.getMessage(), e);
+                throw e;
+            } finally {
+                long duration = System.currentTimeMillis() - startTime;
+                log.info("==> FIN solicitud [{}] a la URL: {} - Estado: {} - Duración: {}ms",
+                        request.getMethod(), request.getRequestURI(), response.getStatus(), duration);
+            }
+        } else {
+            // Para OPTIONS, simplemente proceder sin logging extenso
             filterChain.doFilter(request, response);
-        } catch (Exception e) {
-            log.error("==> ERROR en solicitud [{}]: {}", request.getRequestURI(), e.getMessage(), e);
-            throw e;
-        } finally {
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("==> FIN solicitud [{}] a la URL: {} - Estado: {} - Duración: {}ms",
-                    request.getMethod(), request.getRequestURI(), response.getStatus(), duration);
         }
     }
 }

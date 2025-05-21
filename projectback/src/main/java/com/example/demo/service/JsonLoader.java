@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,16 +15,18 @@ import com.example.demo.entity.Detection;
 import com.example.demo.service.DTO.DetectionsWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class JsonLoader {
 
+    private static final Logger log = LoggerFactory.getLogger(JsonLoader.class);
+    
     private final DetectionService detectionService;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    public JsonLoader(DetectionService detectionService) {
+        this.detectionService = detectionService;
+    }
 
     @Transactional
     public void loadJsonAndSaveToDb(String filePath) throws IOException {
@@ -39,13 +44,15 @@ public class JsonLoader {
             List<Detection> detections = wrapper.getDetections().stream()
                 .map(d -> {
                     log.debug("Procesando detección con timestamp_ms: {}", d.getTimestamp_ms());
-                    return Detection.builder()
-                        .timestampMs(d.getTimestamp_ms())
-                        .date(d.getDate())
-                        .objectsTotal(safeWriteValueAsString(d.getObjects_total()))
-                        .objectsByLane(safeWriteValueAsString(d.getObjects_by_lane()))
-                        .avgSpeedByLane(safeWriteValueAsString(d.getAvg_speed_by_lane()))
-                        .build();
+                    
+                    // Crear manualmente sin builder
+                    Detection detection = new Detection();
+                    detection.setTimestampMs(d.getTimestamp_ms());
+                    detection.setDate(d.getDate());
+                    detection.setObjectsTotal(safeWriteValueAsString(d.getObjects_total()));
+                    detection.setObjectsByLane(safeWriteValueAsString(d.getObjects_by_lane()));
+                    detection.setAvgSpeedByLane(safeWriteValueAsString(d.getAvg_speed_by_lane()));
+                    return detection;
                 })
                 .collect(Collectors.toList());
             
