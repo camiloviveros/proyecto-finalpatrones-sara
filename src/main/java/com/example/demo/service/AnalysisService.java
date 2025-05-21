@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j // Agregamos SLF4J para logging
 public class AnalysisService {
 
     private final DetectionRepository detectionRepository;
@@ -38,7 +40,7 @@ public class AnalysisService {
                             totalCount.getOrDefault(entry.getKey(), 0) + entry.getValue());
                 }
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                log.error("Error al procesar objetos totales: {}", e.getMessage(), e);
             }
         }
         
@@ -66,6 +68,7 @@ public class AnalysisService {
                 .orElse(null);
         
         if (latestDetection == null) {
+            log.warn("No se encontraron detecciones para obtener el volumen por carril");
             return new HashMap<>();
         }
         
@@ -74,7 +77,7 @@ public class AnalysisService {
                     latestDetection.getObjectsByLane(), 
                     new TypeReference<Map<String, Map<String, Integer>>>() {});
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            log.error("Error al procesar objetos por carril: {}", e.getMessage(), e);
             return new HashMap<>();
         }
     }
@@ -129,7 +132,7 @@ public class AnalysisService {
                     speedsByLane.get(entry.getKey()).add(entry.getValue());
                 }
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                log.error("Error al procesar velocidades por carril: {}", e.getMessage(), e);
             }
         }
         
@@ -219,7 +222,7 @@ public class AnalysisService {
                 buses.add(objectsTotal.getOrDefault("bus", 0));
                 trucks.add(objectsTotal.getOrDefault("truck", 0));
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                log.error("Error al procesar evolución del tráfico: {}", e.getMessage(), e);
             }
         }
         
@@ -252,7 +255,7 @@ public class AnalysisService {
                 lane2Speeds.add(avgSpeedByLane.getOrDefault("lane_2", 0.0));
                 lane3Speeds.add(avgSpeedByLane.getOrDefault("lane_3", 0.0));
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                log.error("Error al procesar evolución de velocidad: {}", e.getMessage(), e);
             }
         }
         
