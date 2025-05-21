@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -17,13 +18,44 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j // Agregamos SLF4J para logging
+@Slf4j
 public class AnalysisService {
 
     private final DetectionRepository detectionRepository;
+    private final CacheService cacheService;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    
+    // Prefijos para las claves de caché
+    private static final String CACHE_KEY_TOTAL_VOLUME = "totalVolume";
+    private static final String CACHE_KEY_VOLUME_BY_LANE = "volumeByLane";
+    private static final String CACHE_KEY_HOURLY_PATTERNS = "hourlyPatterns";
+    private static final String CACHE_KEY_AVG_SPEED_BY_LANE = "avgSpeedByLane";
+    private static final String CACHE_KEY_BOTTLENECKS = "bottlenecks";
+    private static final String CACHE_KEY_TRAFFIC_EVOLUTION = "trafficEvolution";
+    private static final String CACHE_KEY_SPEED_EVOLUTION = "speedEvolution";
+    private static final String CACHE_KEY_VEHICLE_TYPE_DOMINANCE = "vehicleTypeDominance";
+    
+    // Tiempo de caché por defecto (5 minutos)
+    private static final long CACHE_DURATION = 300000;
+
+    /**
+     * Limpia la caché cada 10 minutos para asegurar datos frescos
+     */
+    @Scheduled(fixedRate = 600000)
+    public void refreshCache() {
+        log.info("Refrescando caché programada");
+        cacheService.clear();
+    }
 
     public TotalVolumeDTO getTotalVolume() {
+        // Intentar obtener desde caché
+        TotalVolumeDTO cachedResult = (TotalVolumeDTO) cacheService.get(CACHE_KEY_TOTAL_VOLUME);
+        if (cachedResult != null) {
+            log.debug("Devolviendo datos de volumen total desde caché");
+            return cachedResult;
+        }
+
+        log.debug("Calculando datos de volumen total");
         List<Detection> detections = detectionRepository.findAll();
         
         // Contar total de vehículos por tipo
@@ -54,14 +86,30 @@ public class AnalysisService {
         dailyData.put("weekday", totalCount.values().stream().mapToInt(Integer::intValue).sum() * 5 / 7);
         dailyData.put("weekend", totalCount.values().stream().mapToInt(Integer::intValue).sum() * 2 / 7);
         
-        return TotalVolumeDTO.builder()
+        TotalVolumeDTO result = TotalVolumeDTO.builder()
                 .hourly(hourlyData)
                 .daily(dailyData)
                 .total(totalCount)
                 .build();
+        
+        // Guardar en caché
+        cacheService.put(CACHE_KEY_TOTAL_VOLUME, result, CACHE_DURATION);
+        
+        return result;
     }
 
     public Map<String, Map<String, Integer>> getVolumeByLane() {
+        // Intentar obtener desde caché
+        @SuppressWarnings("unchecked")
+        Map<String, Map<String, Integer>> cachedResult = 
+                (Map<String, Map<String, Integer>>) cacheService.get(CACHE_KEY_VOLUME_BY_LANE);
+        
+        if (cachedResult != null) {
+            log.debug("Devolviendo datos de volumen por carril desde caché");
+            return cachedResult;
+        }
+        
+        log.debug("Calculando datos de volumen por carril");
         List<Detection> detections = detectionRepository.findAll();
         Detection latestDetection = detections.stream()
                 .max(Comparator.comparing(Detection::getTimestampMs))
@@ -73,9 +121,14 @@ public class AnalysisService {
         }
         
         try {
-            return objectMapper.readValue(
+            Map<String, Map<String, Integer>> result = objectMapper.readValue(
                     latestDetection.getObjectsByLane(), 
                     new TypeReference<Map<String, Map<String, Integer>>>() {});
+            
+            // Guardar en caché
+            cacheService.put(CACHE_KEY_VOLUME_BY_LANE, result, CACHE_DURATION);
+            
+            return result;
         } catch (JsonProcessingException e) {
             log.error("Error al procesar objetos por carril: {}", e.getMessage(), e);
             return new HashMap<>();
@@ -83,6 +136,16 @@ public class AnalysisService {
     }
 
     public Map<String, Integer> getHourlyPatterns() {
+        // Intentar obtener desde caché
+        @SuppressWarnings("unchecked")
+        Map<String, Integer> cachedResult = (Map<String, Integer>) cacheService.get(CACHE_KEY_HOURLY_PATTERNS);
+        
+        if (cachedResult != null) {
+            log.debug("Devolviendo patrones horarios desde caché");
+            return cachedResult;
+        }
+        
+        log.debug("Calculando patrones horarios");
         // Simulamos patrones horarios
         Map<String, Integer> hourlyPatterns = new HashMap<>();
         hourlyPatterns.put("00:00", 20);
@@ -110,10 +173,23 @@ public class AnalysisService {
         hourlyPatterns.put("22:00", 60);
         hourlyPatterns.put("23:00", 40);
         
+        // Guardar en caché
+        cacheService.put(CACHE_KEY_HOURLY_PATTERNS, hourlyPatterns, CACHE_DURATION);
+        
         return hourlyPatterns;
     }
 
     public Map<String, Double> getAvgSpeedByLane() {
+        // Intentar obtener desde caché
+        @SuppressWarnings("unchecked")
+        Map<String, Double> cachedResult = (Map<String, Double>) cacheService.get(CACHE_KEY_AVG_SPEED_BY_LANE);
+        
+        if (cachedResult != null) {
+            log.debug("Devolviendo velocidad promedio por carril desde caché");
+            return cachedResult;
+        }
+        
+        log.debug("Calculando velocidad promedio por carril");
         List<Detection> detections = detectionRepository.findAll();
         
         // Calcular promedio de velocidad por carril
@@ -145,10 +221,23 @@ public class AnalysisService {
             result.put(entry.getKey(), avg);
         }
         
+        // Guardar en caché
+        cacheService.put(CACHE_KEY_AVG_SPEED_BY_LANE, result, CACHE_DURATION);
+        
         return result;
     }
 
     public List<BottleneckDTO> getBottlenecks() {
+        // Intentar obtener desde caché
+        @SuppressWarnings("unchecked")
+        List<BottleneckDTO> cachedResult = (List<BottleneckDTO>) cacheService.get(CACHE_KEY_BOTTLENECKS);
+        
+        if (cachedResult != null) {
+            log.debug("Devolviendo cuellos de botella desde caché");
+            return cachedResult;
+        }
+        
+        log.debug("Calculando cuellos de botella");
         // Identificar cuellos de botella basados en velocidad y volumen
         Map<String, Double> avgSpeedByLane = getAvgSpeedByLane();
         Map<String, Map<String, Integer>> volumeByLane = getVolumeByLane();
@@ -198,10 +287,22 @@ public class AnalysisService {
                     .build());
         }
         
+        // Guardar en caché
+        cacheService.put(CACHE_KEY_BOTTLENECKS, bottlenecks, CACHE_DURATION);
+        
         return bottlenecks;
     }
 
     public TrafficEvolutionDTO getTrafficEvolution() {
+        // Intentar obtener desde caché
+        TrafficEvolutionDTO cachedResult = (TrafficEvolutionDTO) cacheService.get(CACHE_KEY_TRAFFIC_EVOLUTION);
+        
+        if (cachedResult != null) {
+            log.debug("Devolviendo evolución de tráfico desde caché");
+            return cachedResult;
+        }
+        
+        log.debug("Calculando evolución de tráfico");
         List<Detection> detections = detectionRepository.findAll().stream()
                 .sorted(Comparator.comparing(Detection::getTimestampMs))
                 .collect(Collectors.toList());
@@ -226,15 +327,29 @@ public class AnalysisService {
             }
         }
         
-        return TrafficEvolutionDTO.builder()
+        TrafficEvolutionDTO result = TrafficEvolutionDTO.builder()
                 .timestamps(timestamps)
                 .car(cars)
                 .bus(buses)
                 .truck(trucks)
                 .build();
+        
+        // Guardar en caché
+        cacheService.put(CACHE_KEY_TRAFFIC_EVOLUTION, result, CACHE_DURATION);
+        
+        return result;
     }
 
     public SpeedEvolutionDTO getSpeedEvolution() {
+        // Intentar obtener desde caché
+        SpeedEvolutionDTO cachedResult = (SpeedEvolutionDTO) cacheService.get(CACHE_KEY_SPEED_EVOLUTION);
+        
+        if (cachedResult != null) {
+            log.debug("Devolviendo evolución de velocidad desde caché");
+            return cachedResult;
+        }
+        
+        log.debug("Calculando evolución de velocidad");
         List<Detection> detections = detectionRepository.findAll().stream()
                 .sorted(Comparator.comparing(Detection::getTimestampMs))
                 .collect(Collectors.toList());
@@ -259,15 +374,30 @@ public class AnalysisService {
             }
         }
         
-        return SpeedEvolutionDTO.builder()
+        SpeedEvolutionDTO result = SpeedEvolutionDTO.builder()
                 .timestamps(timestamps)
                 .lane_1(lane1Speeds)
                 .lane_2(lane2Speeds)
                 .lane_3(lane3Speeds)
                 .build();
+        
+        // Guardar en caché
+        cacheService.put(CACHE_KEY_SPEED_EVOLUTION, result, CACHE_DURATION);
+        
+        return result;
     }
 
     public Map<String, Double> getVehicleTypeDominance() {
+        // Intentar obtener desde caché
+        @SuppressWarnings("unchecked")
+        Map<String, Double> cachedResult = (Map<String, Double>) cacheService.get(CACHE_KEY_VEHICLE_TYPE_DOMINANCE);
+        
+        if (cachedResult != null) {
+            log.debug("Devolviendo dominancia por tipo de vehículo desde caché");
+            return cachedResult;
+        }
+        
+        log.debug("Calculando dominancia por tipo de vehículo");
         // Calcular la distribución de tipos de vehículos
         TotalVolumeDTO totalVolume = getTotalVolume();
         Map<String, Integer> totals = totalVolume.getTotal();
@@ -280,16 +410,17 @@ public class AnalysisService {
             dominance.put(entry.getKey(), percentage);
         }
         
+        // Guardar en caché
+        cacheService.put(CACHE_KEY_VEHICLE_TYPE_DOMINANCE, dominance, CACHE_DURATION);
+        
         return dominance;
     }
 
     public List<Integer> getArrayData() {
-        // Datos de ejemplo para visualización de arrays
         return Arrays.asList(45, 23, 78, 12, 90, 32, 56, 67, 89, 21);
     }
 
     public List<ListItemDTO> getLinkedListData() {
-        // Datos de ejemplo para visualización de listas enlazadas
         List<ListItemDTO> linkedList = new ArrayList<>();
         
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -306,17 +437,14 @@ public class AnalysisService {
     }
 
     public List<ListItemDTO> getDoubleLinkedListData() {
-        // Reutilizamos los datos de la lista enlazada simple
         return getLinkedListData();
     }
 
     public List<ListItemDTO> getCircularDoubleLinkedListData() {
-        // Reutilizamos los datos de la lista enlazada simple
         return getLinkedListData();
     }
 
     public List<ListItemDTO> getStackData() {
-        // Datos de ejemplo para visualización de pilas
         List<ListItemDTO> stack = new ArrayList<>();
         
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -333,12 +461,10 @@ public class AnalysisService {
     }
 
     public List<ListItemDTO> getQueueData() {
-        // Datos de ejemplo para visualización de colas
         return getStackData();
     }
 
     public TreeNodeDTO getTreeData() {
-        // Datos de ejemplo para visualización de árboles
         List<TreeNodeDTO> childrenLevel1 = new ArrayList<>();
         
         List<TreeNodeDTO> childrenA = new ArrayList<>();

@@ -11,7 +11,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
     
     @Bean
-    public CorsFilter corsFilter() {
+    public CorsFilter customCorsFilter() {  // Solo cambiamos el nombre del método de corsFilter a customCorsFilter
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         

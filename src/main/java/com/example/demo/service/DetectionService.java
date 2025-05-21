@@ -1,4 +1,3 @@
-// projectback/src/main/java/com/example/demo/service/DetectionService.java
 package com.example.demo.service;
 
 import com.example.demo.entity.Detection;
@@ -9,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -21,6 +21,7 @@ public class DetectionService {
     private final DetectionRepository detectionRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Transactional  // Añadimos esta anotación para manejar correctamente las transacciones
     public void saveDetections(List<Detection> detections) {
         detectionRepository.saveAll(detections);
     }
